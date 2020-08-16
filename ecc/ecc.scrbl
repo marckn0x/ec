@@ -14,9 +14,18 @@ Provides parameters for several popular cryptographic elliptic curves.
 
 @section{Curves}
 
-@defstruct[curve ([a integer?][b integer?][P exact-nonnegative-integer?][Gx exact-nonnegative-integer?][Gy exact-nonnegative-integer?][n exact-nonnegative-integer?])]{
+@defstruct[curve ([a integer?]
+                  [b integer?]
+                  [P exact-nonnegative-integer?]
+                  [Gx exact-nonnegative-integer?]
+                  [Gy exact-nonnegative-integer?]
+                  [n exact-nonnegative-integer?]
+                  [bytes exact-nonnegative-integer?])]{
   Represents the elliptic curve y^2 = x^3 + ax + b over the prime field Z/PZ
-  together with a point (Gx, Gy) that generates a group of order n.
+  together with a point (Gx, Gy) that generates a cyclic group of order n.
+
+  When (de)serializing points in SEC format, assume each coordinate has
+  length @racket[bytes] bytes.
 }
 
 @defstruct[jacobian-point ([x exact-nonnegative-integer?][y exact-nonnegative-integer?][z exact-nonnegative-integer?][id boolean?][curve curve?])]{
@@ -38,6 +47,11 @@ Provides parameters for several popular cryptographic elliptic curves.
   expensive because it requires finding the inverse of a field element.
 }
 
+@defproc[(on-curve? [p affine-point?]) boolean?]{
+  Checks whether @racket[p] satisfies the elliptic curve equation
+  y^2 = x^3 + ax + b for the curve associated with @racket[p]
+}
+
 @section{Curve Operations}
 
 @defproc[(ecdub [j jacobian-point?]) jacobian-point?]{
@@ -55,10 +69,31 @@ Provides parameters for several popular cryptographic elliptic curves.
   times.
 }
 
+@defproc[(dO [p jacobian-point?] [d exact-nonnegative-integer?]) jacobian-point?]{
+  Repeatedly adds point @racket[p] to itself @racket[d] times.
+}
+
+@section{SEC Point Representation}
+
+@defproc[(point->sec [p affine-point?] [#:compressed? compressed? any/c #t]) bytes?]{
+  Serialize point @racket[p] to its SEC representation.
+  When @racket[compressed?] is @racket[#f], both coordinates are stored.
+  Otherwise, only the @racket[x] coordinate and the parity of the @racket[y]
+  coordinate are stored.
+}
+
+@defproc[(sec->point [c curve?] [s bytes?]) affine-point?]{
+  Deserialize the SEC representation @racket[s] of a point on curve @racket[c].
+}
+
 @section{Parameters}
 
 @defthing[secp112r1 curve?]{
   SECG SEC 2 @racket[secp112r1] curve
+}
+
+@defthing[secp112r2 curve?]{
+  SECG SEC 2 @racket[secp112r2] curve
 }
 
 @defthing[secp128r1 curve?]{

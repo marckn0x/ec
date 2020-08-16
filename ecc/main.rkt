@@ -1,7 +1,11 @@
 #lang typed/racket
 
-(require "ecc.rkt"
-         "curves.rkt")
+(require "ec.rkt"
+         "curves.rkt"
+         "data.rkt"
+         "sec.rkt")
 
-(provide (all-from-out "ecc.rkt"
-                       "curves.rkt"))
+(provide (all-from-out "ec.rkt"
+                       "curves.rkt"
+                       "data.rkt"
+                       "sec.rkt"))

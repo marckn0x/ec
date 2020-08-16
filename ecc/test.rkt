@@ -1,0 +1,51 @@
+#lang typed/racket
+
+(require "main.rkt")
+
+(module+ test
+  (require typed/rackunit)
+
+  (: check-dG (-> curve Nonnegative-Integer Nonnegative-Integer Nonnegative-Integer Any))
+  (define (check-dG curve d expect-x expect-y)
+    (define p (jacobian->affine (dG curve d)))
+    (match-define (affine-point x y id? c) p)
+    (check-equal? c curve)
+    (check-equal? id? #f)
+    (check-equal? x expect-x)
+    (check-equal? y expect-y))
+
+  (check-dG secp112r1 1150006935877392410123302408654323
+            #x20b65a4224192dab5255eee17d
+            #x470a3471917b1672ed341a571b73)
+
+  (check-dG secp256k1 1
+            #x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
+            #x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8)
+
+  (check-dG secp256k1 112233445566778899
+            #xA90CC3D3F3E146DAADFC74CA1372207CB4B725AE708CEF713A98EDD73D99EF29
+            #x5A79D6B289610C68BC3B47F3D72F9788A26A06868B4D8E433E1E2AD76FB7DC76)
+
+  (check-dG secp256k1 115792089237316195423570985008687907852837564279074904382605163141518161494328
+            #xACD484E2F0C7F65309AD178A9F559ABDE09796974C57E714C35F110DFC27CCBE
+            #x33CC76DE4F5826029BC7F68E89C49E165227775BC8A071F0FA33D9D439B05FF8)
+
+  (check-dG secp256r1 90715242355624408956760196470661553406669515180918330155841145310341541729331
+            #xDAD0B65394221CF9B051E1FECA5787D098DFE637FC90B9EF945D0C3772581180
+            #x5271A0461CDB8252D61F1C456FA3E59AB1F45B33ACCF5F58389E0577B8990BB3)
+
+  (check-dG secp384r1 1480963799566799162247013278479733421238175455917134641500302698285963247644168050296009920152130351655096803832212
+            #x667842D7D180AC2CDE6F74F37551F55755C7645C20EF73E31634FE72B4C55EE6DE3AC808ACB4BDB4C88732AEE95F41AA
+            #x9482ED1FC0EEB9CAFC4984625CCFC23F65032149E0E144ADA024181535A0F38EEB9FCFF3C2C947DAE69B4C634573A81C)
+
+  (define test-curves
+    (list secp521r1 secp384r1 secp256r1 secp256k1
+          secp224r1 secp224k1 secp192r1 secp192k1
+          secp160r2 secp160r1 secp160k1 secp128r2
+          secp128r1 secp112r2 secp112r1))
+
+  (for ([curve test-curves])
+    (for ([i (in-range 1 20)])
+      (define p (jacobian->affine (dG curve (* 123456789 (assert i exact-nonnegative-integer?)))))
+      (assert (on-curve? p))
+      (check-equal? (sec->point curve (point->sec p)) p))))

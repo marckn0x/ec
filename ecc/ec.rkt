@@ -1,39 +1,15 @@
 #lang typed/racket
 
-(require math/number-theory)
+(require math/number-theory
+         "data.rkt")
 
 (provide dG
+         dO
          ec+
          ecdub
-         (struct-out affine-point)
-         (struct-out jacobian-point)
-         (struct-out curve)
          affine->jacobian
-         jacobian->affine)
-
-(struct affine-point
-  ([x : Nonnegative-Integer]
-   [y : Nonnegative-Integer]
-   [id : Boolean]
-   [curve : curve])
-  #:transparent)
-
-(struct jacobian-point
-  ([x : Nonnegative-Integer]
-   [y : Nonnegative-Integer]
-   [z : Nonnegative-Integer]
-   [id : Boolean]
-   [curve : curve])
-  #:transparent)
-
-(struct curve
-  ([a : Integer]
-   [b : Integer]
-   [P : Nonnegative-Integer]
-   [Gx : Nonnegative-Integer]
-   [Gy : Nonnegative-Integer]
-   [n : Nonnegative-Integer])
-  #:transparent)
+         jacobian->affine
+         on-curve?)
 
 (: affine->jacobian (-> affine-point jacobian-point))
 (define (affine->jacobian p)
@@ -42,19 +18,20 @@
 
 (: jacobian->affine (-> jacobian-point affine-point))
 (define (jacobian->affine j)
-  (match-define (jacobian-point x y z id? (and c (curve _ _ P _ _ _))) j)
+  (match-define (jacobian-point x y z id? (and c (curve _ _ P _ _ _ _))) j)
   (if id?
       (affine-point 0 0 #t c)
-      (let* ([z2 (modulo (* z z) P)]
-             [z3 (modulo (* z2 z) P)])
+      (let* ([z3 (modulo (* z z z) P)]
+             [z3-inv (modular-inverse z3 P)]
+             [z2-inv (modulo (* z3-inv z) P)])
         (affine-point
-         (modulo (* x (modular-inverse z2 P)) P)
-         (modulo (* y (modular-inverse z3 P)) P) ; TODO only needs one inversion!
+         (modulo (* x z2-inv) P)
+         (modulo (* y z3-inv) P)
          #f c))))
 
 (: ecdub (-> jacobian-point jacobian-point))
 (define (ecdub j)
-  (match-define (jacobian-point X Y Z id? (and c (curve a _ P _ _ _))) j)
+  (match-define (jacobian-point X Y Z id? (and c (curve a _ P _ _ _ _))) j)
   (if (or id? (= Y 0))
       (jacobian-point 0 0 1 #t c)
       (let* ([S (modulo (* 4 X Y Y) P)]
@@ -67,7 +44,7 @@
 (: ec+ (-> jacobian-point jacobian-point jacobian-point))
 (define (ec+ p q)
   (match-define (jacobian-point X1 Y1 Z1 id1? c1) p)
-  (match-define (jacobian-point X2 Y2 Z2 id2? (and c2 (curve _ _ P _ _ _))) q)
+  (match-define (jacobian-point X2 Y2 Z2 id2? (and c2 (curve _ _ P _ _ _ _))) q)
   (unless (eq? c1 c2)
     (error "cannot add points from different curves"))
   (cond
@@ -90,18 +67,28 @@
                   [Z3 (modulo (* H Z1 Z2) P)])
              (jacobian-point X3 Y3 Z3 #f c1))))]))
 
+(: on-curve? (-> affine-point Boolean))
+(define (on-curve? p)
+  (match-define (affine-point x y id? (curve a b P _ _ _ _)) p)
+  (if id?
+      #t
+      (= (modulo (* y y) P)
+         (modulo (+ (* x x x) (* a x) b) P))))
+
 (: dG (-> curve Nonnegative-Integer jacobian-point))
 (define (dG c d)
-  (define P (curve-P c))
-  (define G (jacobian-point (curve-Gx c) (curve-Gy c) 1 #f c))
+  (dO (jacobian-point (curve-Gx c) (curve-Gy c) 1 #f c) d))
+
+(: dO (-> jacobian-point Nonnegative-Integer jacobian-point))
+(define (dO p d)
   (let loop ([d : Nonnegative-Integer d]
-             [g : jacobian-point G]
-             [q : jacobian-point (jacobian-point 0 0 1 #t c)])
+             [p : jacobian-point p]
+             [q : jacobian-point (jacobian-point 0 0 1 #t (jacobian-point-curve p))])
     (if (= d 0)
         q
         (loop
          (quotient d 2)
-         (ecdub g)
+         (ecdub p)
          (if (= (remainder d 2) 1)
-             (ec+ q g)
+             (ec+ q p)
              q)))))
