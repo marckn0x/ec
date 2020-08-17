@@ -80,10 +80,10 @@
   (dO (jacobian-point (curve-Gx c) (curve-Gy c) 1 #f c) d))
 
 (: dO (-> jacobian-point Nonnegative-Integer jacobian-point))
-(define (dO p d)
+(define (dO O d)
   (let loop ([d : Nonnegative-Integer d]
-             [p : jacobian-point p]
-             [q : jacobian-point (jacobian-point 0 0 1 #t (jacobian-point-curve p))])
+             [p : jacobian-point O]
+             [q : jacobian-point (jacobian-point 0 0 1 #t (jacobian-point-curve O))])
     (if (= d 0)
         q
         (loop
