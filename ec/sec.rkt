@@ -11,8 +11,8 @@
 (define sec-compressed-odd 3)
 (define sec-uncompressed 4)
 
-(: point->sec (-> affine-point [#:compressed Any] Bytes))
-(define (point->sec p #:compressed [compressed? #t])
+(: point->sec (-> affine-point [#:compressed? Any] Bytes))
+(define (point->sec p #:compressed? [compressed? #t])
   (match-define (affine-point xp yp id? (curve _ _ _ _ _ _ num-bytes)) p)
   (when id?
     (error "cannot serialize the point at infinity"))
