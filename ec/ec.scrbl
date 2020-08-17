@@ -25,13 +25,13 @@ For common cryptographic operations over elliptic curves, please see the
 
 @section{Curves}
 
-@defstruct[curve ([a integer?]
-                  [b integer?]
-                  [P exact-nonnegative-integer?]
-                  [Gx exact-nonnegative-integer?]
-                  [Gy exact-nonnegative-integer?]
-                  [n exact-nonnegative-integer?]
-                  [bytes exact-nonnegative-integer?])]{
+@defstruct*[curve ([a integer?]
+                   [b integer?]
+                   [P exact-nonnegative-integer?]
+                   [Gx exact-nonnegative-integer?]
+                   [Gy exact-nonnegative-integer?]
+                   [n exact-nonnegative-integer?]
+                   [bytes exact-nonnegative-integer?])]{
  Represents the elliptic curve @math{y^2 = x^3 + ax + b} over the prime field @math{ℤ/Pℤ}
  together with a point @math{(Gx, Gy)} that generates a cyclic group of order @math{n}.
 
@@ -39,21 +39,21 @@ For common cryptographic operations over elliptic curves, please see the
  length @racketfont{bytes} bytes.
 }
 
-@defstruct[jacobian-point ([x exact-nonnegative-integer?]
-                           [y exact-nonnegative-integer?]
-                           [z exact-nonnegative-integer?]
-                           [id boolean?]
-                           [curve curve?])]{
+@defstruct*[jacobian-point ([x exact-nonnegative-integer?]
+                            [y exact-nonnegative-integer?]
+                            [z exact-nonnegative-integer?]
+                            [id boolean?]
+                            [curve curve?])]{
  When @racketfont{id} is not @racket[#f], represents the
  @hyperlink["https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Point_at_infinity"]{point at infinity}.
  Otherwise, represents a point on the elliptic curve @racketfont{curve} with
  @hyperlink["http://hyperelliptic.org/EFD/g1p/auto-jquartic-2xyz.html"]{doubling-oriented XYZ Jacobian coordinates} @math{(x, y, z)}.
 }
 
-@defstruct[affine-point ([x exact-nonnegative-integer?]
-                         [y exact-nonnegative-integer?]
-                         [id boolean?]
-                         [curve curve])]{
+@defstruct*[affine-point ([x exact-nonnegative-integer?]
+                          [y exact-nonnegative-integer?]
+                          [id boolean?]
+                          [curve curve])]{
  When @racketfont{id} is not @racket[#f], represents the
  @hyperlink["https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Point_at_infinity"]{point at infinity}.
  Otherwise, represents a point on the elliptic curve @racketfont{curve} with
